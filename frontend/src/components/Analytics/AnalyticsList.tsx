@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useCallback, useState } from "react";
+import axios, { AxiosError } from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "./AnalyticsList.css";
 import { baseApiUrl } from "../../environment";
+import { useMutation } from "@tanstack/react-query";
 
 export interface AnalyticsData {
   id: number;
@@ -14,35 +15,54 @@ export interface AnalyticsData {
   updatedAt: string;
 }
 
+interface MutationData {
+  alias: string;
+  limit: number;
+}
+
 const AnalyticsList = () => {
   const [shortenedUrl, setShortenedUrl] = useState("");
-  const [dataList, setDataList] = useState<AnalyticsData[]>([]);
-  const [dataCount, setDataCount] = useState(5);
+  const [limit, setLimit] = useState(5);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { mutate, data, isPending } = useMutation<
+    AnalyticsData[],
+    AxiosError,
+    MutationData
+  >({
+    mutationFn: ({ alias, limit }) =>
+      axios
+        .get(`${baseApiUrl}/analytics/${alias}`, {
+          params: { limit },
+        })
+        .then((res) => {
+          const data = res.data?.data;
 
-    setDataList([]);
+          if (!data?.length) {
+            toast.info("Нет данных для отображения");
+          }
 
-    try {
-      const alias = shortenedUrl.split("/").pop() || "";
-      const response = await axios.get(`${baseApiUrl}/analytics/${alias}`, {
-        params: { limit: dataCount },
-      });
-
-      const analytics: AnalyticsData[] = response.data?.data;
-
-      if (analytics?.length > 0) {
-        setDataList(analytics);
-      } else {
-        toast.info("Нет данных для отображения");
-      }
-    } catch (error: any) {
+          return data;
+        }),
+    onError: (error: AxiosError) => {
       toast.error(
-        error?.response?.data?.error || "Ошибка при получении списка данных"
+        (error.response?.data as { error?: string })?.error ||
+          "Ошибка при получении списка данных"
       );
-    }
-  };
+    },
+  });
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+
+      const alias = shortenedUrl.split("/").pop() || "";
+
+      if (alias) {
+        mutate({ alias, limit });
+      }
+    },
+    [shortenedUrl, limit, mutate]
+  );
 
   return (
     <div className="shorten-url-form-container">
@@ -78,18 +98,18 @@ const AnalyticsList = () => {
           <input
             type="number"
             id="originalUrl"
-            value={dataCount}
-            onChange={(e) => setDataCount(Number(e.target.value) || 5)}
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value) || 5)}
             required
             placeholder="Введите кол-во"
           />
         </div>
 
-        <button type="submit" className="submit-btn">
-          Получить данные
+        <button type="submit" disabled={isPending} className="submit-btn">
+          {isPending ? "Загрузка..." : "Получить данные"}
         </button>
 
-        {dataList.length > 0 && (
+        {data && data?.length > 0 && (
           <table className="analytics-table">
             <thead>
               <tr>
@@ -101,7 +121,7 @@ const AnalyticsList = () => {
               </tr>
             </thead>
             <tbody>
-              {dataList.map((data: any) => (
+              {data.map((data: any) => (
                 <tr key={data.id}>
                   <td>{data.id}</td>
                   <td>{data.ip}</td>

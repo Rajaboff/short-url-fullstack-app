@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useCallback, useState } from "react";
+import axios, { AxiosError } from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { baseApiUrl } from "../../environment";
+import { useMutation } from "@tanstack/react-query";
 
 export interface InfoData {
   originalUrl: string;
@@ -9,25 +10,42 @@ export interface InfoData {
   clickCount: number;
 }
 
+interface MutationData {
+  alias: string;
+}
+
 const ShortenUrlInfoForm = () => {
   const [shortenedUrl, setShortenedUrl] = useState("");
-  const [urlInfo, setUrlInfo] = useState<InfoData | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { mutate, data, isPending, reset } = useMutation<
+    InfoData,
+    AxiosError,
+    MutationData
+  >({
+    mutationFn: ({ alias }) =>
+      axios.get(`${baseApiUrl}/info/${alias}`).then((res) => {
+        return res.data;
+      }),
+    onError: (error: AxiosError) => {
+      const errorMessage =
+        (error.response?.data as { error?: string })?.error ||
+        "Ошибка при получении информации о ссылке";
+      toast.error(errorMessage);
+    },
+  });
 
-    try {
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+
       const alias = shortenedUrl.split("/").pop() || "";
-      const response = await axios.get(`${baseApiUrl}/info/${alias}`);
 
-      setUrlInfo(response.data);
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.error ||
-          "Ошибка при получении информации о ссылке"
-      );
-    }
-  };
+      if (alias) {
+        mutate({ alias });
+      }
+    },
+    [mutate, shortenedUrl]
+  );
 
   const handleDelete = async () => {
     try {
@@ -35,7 +53,7 @@ const ShortenUrlInfoForm = () => {
       await axios.delete(`${baseApiUrl}/delete/${alias}`);
       toast.success("Ссылка успешно удалена");
       setShortenedUrl("");
-      setUrlInfo(null);
+      reset();
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Ошибка при удалении ссылки");
     }
@@ -70,15 +88,15 @@ const ShortenUrlInfoForm = () => {
           />
         </div>
 
-        <button type="submit" className="submit-btn">
-          Получить
+        <button type="submit" disabled={isPending} className="submit-btn">
+          {isPending ? "Загрузка..." : "Получить данные"}
         </button>
 
-        {urlInfo && (
+        {data && (
           <div className="link-info">
-            <p>Основной урл: {urlInfo.originalUrl}</p>
-            <p>Создано: {new Date(urlInfo.createdAt).toLocaleString()}</p>
-            <p>Кол-во переходов: {urlInfo.clickCount}</p>
+            <p>Основной урл: {data.originalUrl}</p>
+            <p>Создано: {new Date(data.createdAt).toLocaleString()}</p>
+            <p>Кол-во переходов: {data.clickCount}</p>
 
             <button className="delete-btn" onClick={handleDelete}>
               Удалить ссылку

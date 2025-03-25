@@ -1,38 +1,59 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useCallback, useState } from "react";
+import axios, { AxiosError } from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "./ShortenUrlForm.css";
 import { baseApiUrl } from "../../environment";
+import { useMutation } from "@tanstack/react-query";
 
 export interface ShortData {
   shortenedUrl: string;
 }
 
+interface MutationData {
+  alias: string;
+  expiresAt: string;
+  originalUrl: string;
+}
+
 const ShortenUrlForm = () => {
   const [originalUrl, setOriginalUrl] = useState("");
-  const [shortenedUrl, setShortenedUrl] = useState("");
   const [alias, setAlias] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await axios.post(`${baseApiUrl}/shorten`, {
-        originalUrl,
-        alias,
-        expiresAt,
-      });
-
-      setShortenedUrl(response.data.shortenedUrl);
-      toast.success("Ссылка успешно сокращена!");
-    } catch (error: any) {
+  const { mutate, data, isPending } = useMutation<
+    string,
+    AxiosError,
+    MutationData
+  >({
+    mutationFn: ({ originalUrl, alias, expiresAt }) =>
+      axios
+        .post(`${baseApiUrl}/shorten`, {
+          originalUrl,
+          alias,
+          expiresAt,
+        })
+        .then((res) => {
+          toast.success("Ссылка успешно сокращена!");
+          return res.data.shortenedUrl;
+        }),
+    onError: (error: AxiosError) => {
       const errorMessage =
-        error.response?.data?.error ||
-        "Произошла ошибка при создании короткой ссылки";
+        (error.response?.data as { error?: string })?.error ||
+        "Ошибка при создании короткой ссылки";
       toast.error(errorMessage);
-    }
-  };
+    },
+  });
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (originalUrl) {
+        mutate({ originalUrl, expiresAt, alias });
+      }
+    },
+    [originalUrl, expiresAt, alias, mutate]
+  );
 
   return (
     <div className="shorten-url-form-container">
@@ -85,15 +106,15 @@ const ShortenUrlForm = () => {
           />
         </div>
 
-        <button type="submit" className="submit-btn">
-          Сократить
+        <button type="submit" disabled={isPending} className="submit-btn">
+          {isPending ? "Загрузка..." : "Сократить"}
         </button>
 
-        {shortenedUrl && (
+        {data && (
           <div className="result">
             <p>Ваша короткая ссылка:</p>
-            <a href={shortenedUrl} target="_blank" rel="noopener noreferrer">
-              {shortenedUrl}
+            <a href={data} target="_blank" rel="noopener noreferrer">
+              {data}
             </a>
           </div>
         )}

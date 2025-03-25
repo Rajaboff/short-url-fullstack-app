@@ -14,6 +14,7 @@ function App() {
           <Route path="/shorten" element={<ShortenUrlForm />} />
           <Route path="/info" element={<ShortenUrlInfoForm />} />
           <Route path="/analytics" element={<AnalyticsList />} />
+          <Route path="*" element={<ShortenUrlForm />} />
         </Routes>
       </div>
     </Router>

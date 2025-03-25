@@ -7,8 +7,17 @@ import {
 } from "../utils/shortUrlUtils";
 import Link from "../db/models/Link";
 import Analytic from "../db/models/Analytic";
+import rateLimit from "express-rate-limit";
 
 const app: Application = express();
+
+const limiter = rateLimit({
+  windowMs: 2 * 60 * 1000,
+  max: 50,
+  message: { error: "Слишком много запросов, попробуйте позже." },
+});
+
+app.use(limiter);
 
 app.post("/shorten", async (req: Request, res: Response) => {
   const { originalUrl, expiresAt, alias } = req.body;

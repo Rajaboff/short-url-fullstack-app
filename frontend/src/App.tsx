@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import ShortenUrlForm from "./components/Shorten/ShortenUrlForm";
 import AnalyticsList from "./components/Analytics/AnalyticsList";
 import Header from "./components/Header/Header";
@@ -14,7 +14,7 @@ function App() {
           <Route path="/shorten" element={<ShortenUrlForm />} />
           <Route path="/info" element={<ShortenUrlInfoForm />} />
           <Route path="/analytics" element={<AnalyticsList />} />
-          <Route path="*" element={<ShortenUrlForm />} />
+          <Route path="*" element={<Navigate to="/shorten" replace />} />
         </Routes>
       </div>
     </Router>

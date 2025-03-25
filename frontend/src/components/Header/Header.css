@@ -1,0 +1,38 @@
+.header {
+  background-color: #4caf50;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+}
+
+.header__nav {
+  display: flex;
+  justify-content: center;
+}
+
+.header__list {
+  list-style: none;
+  display: flex;
+  gap: 40px;
+  margin: 0;
+  padding: 0;
+}
+
+.header__item {
+  font-size: 18px;
+}
+
+.header__link {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.header__link:hover {
+  color: #ffd700;
+}

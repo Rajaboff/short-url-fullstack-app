@@ -1,0 +1,51 @@
+.shorten-url-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f4f7fa;
+  padding: 20px;
+}
+
+.shorten-url-form {
+  min-width: 400px;
+  max-width: max-content;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 32px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.analytics-table th,
+.analytics-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.analytics-table th {
+  background-color: #007bff;
+  color: #ffffff;
+  font-weight:  500;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.analytics-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.analytics-table a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.analytics-table a:hover {
+  text-decoration: underline;
+}
